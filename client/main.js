@@ -1,24 +1,39 @@
-import { Template } from 'meteor/templating';
-import { ReactiveVar } from 'meteor/reactive-var';
+/*import { Template } from 'meteor/templating';
+import { ReactiveVar } from 'meteor/reactive-var';*/
 
-import './main.html';
+Meteor.subscribe('waiters');
 
-Template.hello.onCreated(function helloOnCreated() {
-  // counter starts at 0
-  this.counter = new ReactiveVar(0);
+Template.home.helpers({
+		alreadyWaiter: function(){
+		if(Session.get("waiterID")){
+			var currentUser = Waiters.findOne({_id: Session.get("waiterID")});
+			if(currentUser){
+				return {_id: currentUser._id, name: currentUser.name, shares: currentUser.shares, position: 0};
+			}
+		}else{
+			return null;
+		}
+	}
 });
 
-Template.hello.helpers({
-  counter() {
-    return Template.instance().counter.get();
-  },
+Template.waiters.helpers({
+	waiters: function(){
+		return Waiters.find({}, {sort: {shares: -1, createAt: 1}, limit: 10});
+	}
 });
 
-Template.hello.events({
-  'click button'(event, instance) {
-    // increment the counter when button is clicked
-    instance.counter.set(instance.counter.get() + 1);
-  },
-});
+Template.formulaire.events({
+	'click .btn': function(event){
+		event.preventDefault();
 
+		var name = $('#name').val();
+		var email = $('#email').val();
 
+    Meteor.call('insertWaiters', {name: name, email: email}, function(error, result) {
+      if(result){
+				Session.setPersistent("waiterID", result);
+				console.log(result);
+			}
+    });
+	}
+})
